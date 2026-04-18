@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Portfolio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root { --bg-color: #09090b; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg-color); color: #fff; overflow-x: hidden; }
+    html { scroll-behavior: smooth; }
+
+    /* Gradient text */
+    .gradient-text {
+      background: linear-gradient(to bottom, #fff, #fff, #a1a1aa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Glass card */
+    .glass-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
+      backdrop-filter: blur(24px);
+      transition: all 0.4s cubic-bezier(0.25,0.46,0.45,0.94);
+    }
+    .glass-card:hover {
+      background: rgba(255,255,255,0.05);
+      border-color: rgba(255,255,255,0.2);
+      transform: translateY(-2px);
+      box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
+    }
+
+    /* Reveal animation */
+    .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.8s ease-out, transform 0.8s ease-out; }
+    .reveal.active { opacity: 1; transform: translateY(0); }
+    .delay-100 { transition-delay: 100ms; }
+    .delay-200 { transition-delay: 200ms; }
+    .delay-300 { transition-delay: 300ms; }
+    .delay-400 { transition-delay: 400ms; }
+
+    /* Navbar */
+    .nav-link {
+      position: relative;
+      padding: 0.5rem 0;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #a1a1aa;
+      transition: color 0.3s;
+    }
+    .nav-link:hover, .nav-link.active { color: #fff; }
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0;
+      width: 0; height: 1px;
+      background: #60a5fa;
+      transition: width 0.3s ease;
+    }
+    .nav-link:hover::after, .nav-link.active::after { width: 100%; }
+
+    /* Skill bar */
+    .skill-bar-bg {
+      width: 100%; height: 6px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+    .skill-bar-fill {
+      height: 100%;
+      border-radius: 9999px;
+      background: linear-gradient(to right, #60a5fa, #38bdf8);
+      width: 0%;
+      transition: width 1.2s cubic-bezier(0.25,0.46,0.45,0.94);
+    }
+    .skill-bar-fill.animate { width: var(--fill); }
+
+    /* Image placeholder */
+    .profile-frame {
+      position: relative;
+      width: 280px; height: 280px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 2px solid rgba(255,255,255,0.1);
+      flex-shrink: 0;
+    }
+    .profile-frame img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    .profile-frame::before {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 50%;
+      background: conic-gradient(from 90deg at 50% 50%, transparent 0%, transparent 60%, #60a5fa 100%);
+      z-index: -1;
+      animation: spin-slow 8s linear infinite;
+    }
+
+    @keyframes spin-slow { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    @keyframes float-subtle {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    .float-anim { animation: float-subtle 6s ease-in-out infinite; }
+
+    /* Project image */
+    .project-img-wrap {
+      width: 100%; height: 200px;
+      overflow: hidden;
+      border-radius: 12px 12px 0 0;
+    }
+    .project-img-wrap img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      filter: grayscale(40%);
+      transition: all 0.5s;
+    }
+    .glass-card:hover .project-img-wrap img {
+      filter: grayscale(0%);
+      transform: scale(1.05);
+    }
+
+    /* Glow background */
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Mobile menu */
+    .mobile-menu {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease, opacity 0.3s ease;
+      opacity: 0;
+    }
+    .mobile-menu.open { max-height: 300px; opacity: 1; }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 2rem; right: 2rem;
+      padding: 1rem 1.5rem;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(96,165,250,0.3);
+      backdrop-filter: blur(24px);
+      border-radius: 12px;
+      color: #fff;
+      font-size: 0.875rem;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.4s ease;
+      z-index: 100;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    /* Tag pill */
+    .tag-pill {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      font-size: 0.625rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-radius: 9999px;
+      background: rgba(96,165,250,0.1);
+      color: #60a5fa;
+      border: 1px solid rgba(96,165,250,0.2);
+    }
+
+    /* Input */
+    .form-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .form-input:focus {
+      border-color: rgba(96,165,250,0.5);
+      box-shadow: 0 0 0 3px rgba(96,165,250,0.1);
+    }
+    .form-input::placeholder { color: #71717a; }
+
+    /* Btn */
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.75rem 2rem;
+      background: #fff; color: #000;
+      font-size: 0.75rem; font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      border-radius: 9999px;
+      border: none; cursor: pointer;
+      transition: all 0.5s;
+      box-shadow: 0 0 20px -5px rgba(255,255,255,0.3);
+    }
+    .btn-primary:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px -5px rgba(255,255,255,0.4);
+    }
+    .btn-primary:active { transform: scale(0.98); }
+
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.75rem 2rem;
+      background: transparent; color: #fff;
+      font-size: 0.75rem; font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      border-radius: 9999px;
+      border: 1px solid rgba(255,255,255,0.2);
+      cursor: pointer;
+      transition: all 0.5s;
+    }
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.05);
+      border-color: rgba(255,255,255,0.4);
+      transform: scale(1.05);
+    }
+
+    /* Scroll indicator */
+    .scroll-indicator {
+      position: fixed; top: 0; left: 0;
+      height: 2px; background: #60a5fa;
+      z-index: 200;
+      transition: width 0.1s linear;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Scroll Progress -->
+  <div class="scroll-indicator" id="scrollIndicator"></div>
+
+  <!-- Background Glow -->
+  <div class="glow-orb" style="width:600px;height:600px;top:-200px;left:-200px;background:rgba(96,165,250,0.04);"></div>
+  <div class="glow-orb" style="width:500px;height:500px;bottom:10%;right:-150px;background:rgba(96,165,250,0.03);"></div>
+
+  <!-- ===== NAVBAR ===== -->
+  <nav id="navbar" style="position:fixed;top:0;left:0;right:0;z-index:50;backdrop-filter:blur(12px);background:rgba(9,9,11,0.8);border-bottom:1px solid rgba(255,255,255,0.05);transition:all 0.3s;">
+    <div style="max-width:80rem;margin:0 auto;padding:0 1.5rem;">
+      <div style="display:flex;align-items:center;justify-content:space-between;height:4rem;">
+        <!-- Logo -->
+        <a href="#hero" style="font-size:1.25rem;font-weight:600;color:#fff;text-decoration:none;letter-spacing:-0.02em;">
+          <span style="color:#60a5fa;">&lt;</span>Portfolio<span style="color:#60a5fa;">/&gt;</span>
+        </a>
+        <!-- Desktop Links -->
+        <div style="display:flex;align-items:center;gap:2rem;" class="desktop-nav">
+          <a href="#skills" class="nav-link">Skills</a>
+          <a href="#projects" class="nav-link">Projects</a>
+          <a href="#contact" class="nav-link">Contact</a>
+        </div>
+        <!-- Hamburger -->
+        <button id="menuToggle" style="display:none;background:none;border:none;color:#fff;cursor:pointer;" aria-label="Toggle menu">
+          <i data-lucide="menu" style="width:24px;height:24px;"></i>
+        </button>
+      </div>
+      <!-- Mobile Menu -->
+      <div class="mobile-menu" id="mobileMenu">
+        <div style="display:flex;flex-direction:column;gap:1rem;padding-bottom:1rem;">
+          <a href="#skills" class="nav-link mobile-link">Skills</a>
+          <a href="#projects" class="nav-link mobile-link">Projects</a>
+          <a href="#contact" class="nav-link mobile-link">Contact</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===== HERO ===== -->
+  <section id="hero" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:6rem 1.5rem 4rem;position:relative;">
+    <div style="max-width:72rem;margin:0 auto;text-align:center;">
+      <div class="reveal" style="margin-bottom:1.5rem;">
+        <span class="tag-pill">Welcome to my world</span>
+      </div>
+      <h1 class="reveal delay-100 gradient-text" style="font-size:clamp(2.5rem,8vw,6rem);font-weight:500;line-height:0.95;letter-spacing:-0.04em;margin-bottom:1.5rem;">
+        Hi, I'm manpreet kaur<br/>
+        i have completed graduation from kuk university in B.A. I am persuing my computer course from hartron skill center.
+      </h1>
+      <p class="reveal delay-200" style="font-size:clamp(0.875rem,2vw,1.125rem);font-weight:300;color:#a1a1aa;max-width:500px;margin:0 auto 2.5rem;line-height:1.6;">
+        A front-end developer crafting clean, modern web experiences with HTML, CSS & JavaScript.
+      </p>
+      <div class="reveal delay-300" style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+        <a href="#projects" class="btn-primary">
+          View Projects <i data-lucide="arrow-down" style="width:14px;height:14px;"></i>
+        </a>
+        <a href="#contact" class="btn-secondary">
+          Get in Touch
+        </a>
+      </div>
+      <!-- Scroll hint -->
+      <div class="reveal delay-400 float-anim" style="margin-top:4rem;">
+        <i data-lucide="chevron-down" style="width:20px;height:20px;color:#71717a;"></i>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SKILLS ===== -->
+  <section id="skills" style="padding:6rem 1.5rem;position:relative;">
+    <div style="max-width:72rem;margin:0 auto;">
+      <!-- Section Header -->
+      <div class="reveal" style="text-align:center;margin-bottom:4rem;">
+        <span style="font-size:0.625rem;font-weight:500;text-transform:uppercase;letter-spacing:0.15em;color:#60a5fa;">What I Know</span>
+        <h2 class="gradient-text" style="font-size:clamp(1.875rem,5vw,3rem);font-weight:500;letter-spacing:-0.03em;margin-top:0.75rem;">Skills & About Me</h2>
+      </div>
+
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4rem;">
+        <!-- Profile + About -->
+        <div class="reveal delay-100" style="display:flex;flex-direction:column;align-items:center;gap:2rem;width:100%;">
+          <!-- Profile Image Placeholder -->
+          <div class="">
+            <!--
+              REPLACE the src below with your actual photo path, e.g. src="my-photo.jpg"
+              The placeholder below is a generic avatar from UI Faces
+            -->
+            <img src="https://picsum.photos/seed/portfolio-avatar/400/400.jpg" alt="Your Photo" />
+          </div>
+          <div style="text-align:center;max-width:500px;">
+            <h3 style="font-size:1.5rem;font-weight:500;letter-spacing:-0.02em;margin-bottom:0.75rem;">A Bit About Me</h3>
+            <p style="font-size:0.875rem;font-weight:300;color:#a1a1aa;line-height:1.7;">
+              I'm a passionate web developer focused on building responsive, accessible, and visually appealing websites. I love turning ideas into reality through code and continuously learning new technologies.
+            </p>
+          </div>
+        </div>
+
+        <!-- Skill Cards -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;width:100%;">
+          <!-- HTML -->
+          <div class="glass-card reveal delay-100" style="padding:2rem;border-radius:16px;">
+            <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.5rem;">
+              <div style="width:44px;height:44px;border-radius:12px;background:rgba(251,146,60,0.1);border:1px solid rgba(251,146,60,0.2);display:flex;align-items:center;justify-content:center;">
+                <i data-lucide="code" style="width:20px;height:20px;color:#fb923c;"></i>
+              </div>
+              <div>
+                <h4 style="font-size:1rem;font-weight:500;">HTML</h4>
+                <span style="font-size:0.75rem;color:#71717a;">Semantic Markup</span>
+              </div>
+            </div>
+            <p style="font-size:0.8rem;font-weight:300;color:#a1a1aa;line-height:1.6;margin-bottom:1.25rem;">
+              Structuring web pages with semantic HTML5 elements for accessibility and SEO best practices.
+            </p>
+            <div class="skill-bar-bg">
+              <div class="skill-bar-fill" style="--fill: 85%;"></div>
+            </div>
+            <span style="font-size:0.625rem;color:#71717a;margin-top:0.5rem;display:block;">85%</span>
+          </div>
+
+          <!-- CSS -->
+          <div class="glass-card reveal delay-200" style="padding:2rem;border-radius:16px;">
+            <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.5rem;">
+              <div style="width:44px;height:44px;border-radius:12px;background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.2);display:flex;align-items:center;justify-content:center;">
+                <i data-lucide="palette" style="width:20px;height:20px;color:#60a5fa;"></i>
+              </div>
+              <div>
+                <h4 style="font-size:1rem;font-weight:500;">CSS</h4>
+                <span style="font-size:0.75rem;color:#71717a;">Styling & Layout</span>
+              </div>
+            </div>
+            <p style="font-size:0.8rem;font-weight:300;color:#a1a1aa;line-height:1.6;margin-bottom:1.25rem;">
+              Creating responsive layouts with Flexbox, Grid, animations, and modern CSS techniques.
+            </p>
+            <div class="skill-bar-bg">
+              <div class="skill-bar-fill" style="--fill: 75%;"></div>
+            </div>
+            <span style="font-size:0.625rem;color:#71717a;margin-top:0.5rem;display:block;">75%</span>
+          </div>
+
+          <!-- JS -->
+          <div class="glass-card reveal delay-300" style="padding:2rem;border-radius:16px;">
+            <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.5rem;">
+              <div style="width:44px;height:44px;border-radius:12px;background:rgba(250,204,21,0.1);border:1px solid rgba(250,204,21,0.2);display:flex;align-items:center;justify-content:center;">
+                <i data-lucide="terminal" style="width:20px;height:20px;color:#facc15;"></i>
+              </div>
+              <div>
+                <h4 style="font-size:1rem;font-weight:500;">JavaScript</h4>
+                <span style="font-size:0.75rem;color:#71717a;">Logic & Interactivity</span>
+              </div>
+            </div>
+            <p style="font-size:0.8rem;font-weight:300;color:#a1a1aa;line-height:1.6;margin-bottom:1.25rem;">
+              Adding interactivity, DOM manipulation, event handling, and building small applications.
+            </p>
+            <div class="skill-bar-bg">
+              <div class="skill-bar-fill" style="--fill: 65%;"></div>
+            </div>
+            <span style="font-size:0.625rem;color:#71717a;margin-top:0.5rem;display:block;">65%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PROJECTS ===== -->
+  <section id="projects" style="padding:6rem 1.5rem;position:relative;">
+    <div style="max-width:72rem;margin:0 auto;">
+      <!-- Section Header -->
+      <div class="reveal" style="text-align:center;margin-bottom:4rem;">
+        <span style="font-size:0.625rem;font-weight:500;text-transform:uppercase;letter-spacing:0.15em;color:#60a5fa;">My Work</span>
+        <h2 class="gradient-text" style="font-size:clamp(1.875rem,5vw,3rem);font-weight:500;letter-spacing:-0.03em;margin-top:0.75rem;">Mini Projects</h2>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem;">
+
+        <!-- Project 1 -->
+        <div class="glass-card reveal delay-100" style="border-radius:16px;overflow:hidden;">
+          <div class="project-img-wrap">
+            <img src="https://picsum.photos/seed/project-landing/600/400.jpg" alt="Project 1" />
+          </div>
+          <div style="padding:1.5rem;">
+            <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;flex-wrap:wrap;">
+              <span class="tag-pill">HTML</span>
+              <span class="tag-pill">CSS</span>
+            </div>
+            <h3 style="font-size:1.125rem;font-weight:500;margin-bottom:0.5rem;">Landing Page</h3>
+            <p style="font-size:0.8rem;font-weight:300;color:#a1a1aa;line-height:1.6;margin-bottom:1.25rem;">
+              A responsive landing page with a hero section, features grid, and a clean modern design.
+            </p>
+            <div style="display:flex;gap:0.75rem;">
+              <a href="#" style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.75rem;font-weight:500;color:#60a5fa;text-decoration:none;transition:color 0.3s;" onmouseover="this.style.color='#93c5fd'" onmouseout="this.style.color='#60a5fa'">
+                <i data-lucide="external-link" style="width:14px;height:14px;"></i> Live Demo
+              </a>
+              <a href="#" style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.75rem;font-weight:500;color:#a1a1aa;text-decoration:none;transition:color 0.3s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#a1a1aa'">
+                <i data-lucide="github" style="width:14px;height:14px;"></i> Code
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Project 2 -->
+        <div class="glass-card reveal delay-200" style="border-radius:16px;overflow:hidden;">
+          <div class="project-img-wrap">
+            <img src="https://picsum.photos/seed/project-calculator/600/400.jpg" alt="Project 2" />
+          </div>
+          <div style="padding:1.5rem;">
+            <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;flex-wrap:wrap;">
+              <span class="tag-pill">HTML</span>
+              <span class="tag-pill">CSS</span>
+              <span class="tag-pill">JS</span>
+            </div>
+            <h3 style="font-size:1.125rem;font-weight:500;margin-bottom:0.5rem;">Calculator App</h3>
+            <p style="font-size:0.8rem;font-weight:300;color:#a1a1aa;line-height:1.6;margin-bottom:1.25rem;">
+              A functional calculator with basic arithmetic operations, keyboard support, and a sleek UI.
+            </p>
+            <div style="display:flex;gap:0.75rem;">
+              <a href="#" style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.75rem;font-weight:500;color:#60a5fa;text-decoration:none;transition:color 0.3s;" onmouseover="this.style.color='#93c5fd'" onmouseout="this.style.color='#60a5fa'">
+                <i data-lucide="external-link" style="width:14px;height:14px;"></i> Live Demo
+              </a>
+              <a href="#" style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.75rem;font-weight:500;color:#a1a1aa;text-decoration:none;transition:color 0.3s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#a1a1aa'">
+                <i data-lucide="github" style="width:14px;height:14px;"></i> Code
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Project 3 -->
+        <div class="glass-card reveal delay-300" style="border-radius:16px;overflow:hidden;">
+          <div class="project-img-wrap">
+            <img src="https://picsum.photos/seed/project-todo/600/400.jpg" alt="Project 3" />
+          </div>
+          <div style="padding:1.5rem;">
+            <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;flex-wrap:wrap;">
+              <span class="tag-pill">HTML</span>
+              <span class="tag-pill">CSS</span>
+              <span class="tag-pill">JS</span>
+            </div>
+            <h3 style="font-size:1.125rem;font-weight:500;margin-bottom:0.5rem;">To-Do List</h3>
+            <p style="font-size:0.8rem;font-weight:300;color:#a1a1aa;line-height:1.6;margin-bottom:1.25rem;">
+              A task manager with add, delete, mark complete, and local storage persistence features.
+            </p>
+            <div style="display:flex;gap:0.75rem;">
+              <a href="#" style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.75rem;font-weight:500;color:#60a5fa;text-decoration:none;transition:color 0.3s;" onmouseover="this.style.color='#93c5fd'" onmouseout="this.style.color='#60a5fa'">
+                <i data-lucide="external-link" style="width:14px;height:14px;"></i> Live Demo
+              </a>
+              <a href="#" style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.75rem;font-weight:500;color:#a1a1aa;text-decoration:none;transition:color 0.3s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#a1a1aa'">
+                <i data-lucide="github" style="width:14px;height:14px;"></i> Code
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CONTACT ===== -->
+  <section id="contact" style="padding:6rem 1.5rem 8rem;position:relative;">
+    <div style="max-width:72rem;margin:0 auto;">
+      <!-- Section Header -->
+      <div class="reveal" style="text-align:center;margin-bottom:4rem;">
+        <span style="font-size:0.625rem;font-weight:500;text-transform:uppercase;letter-spacing:0.15em;color:#60a5fa;">Say Hello</span>
+        <h2 class="gradient-text" style="font-size:clamp(1.875rem,5vw,3rem);font-weight:500;letter-spacing:-0.03em;margin-top:0.75rem;">Get in Touch</h2>
+      </div>
+
+      <div style="display:flex;flex-direction:column;align-items:center;gap:3rem;max-width:600px;margin:0 auto;">
+        <!-- Contact Info -->
+        <div class="reveal delay-100" style="display:flex;flex-wrap:wrap;gap:1.5rem;justify-content:center;">
+          <a href="mailto:your@email.com" style="display:flex;align-items:center;gap:0.5rem;font-size:0.8rem;color:#a1a1aa;text-decoration:none;transition:color 0.3s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#a1a1aa'">
+            <i data-lucide="mail" style="width:16px;height:16px;color:#60a5fa;"></i> your@email.com
+          </a>
+          <a href="https://github.com/" target="_blank" style="display:flex;align-items:center;gap:0.5rem;font-size:0.8rem;color:#a1a1aa;text-decoration:none;transition:color 0.3s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#a1a1aa'">
+            <i data-lucide="github" style="width:16px;height:16px;color:#60a5fa;"></i> GitHub
+          </a>
+          <a href="https://linkedin.com/" target="_blank" style="display:flex;align-items:center;gap:0.5rem;font-size:0.8rem;color:#a1a1aa;text-decoration:none;transition:color 0.3s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#a1a1aa'">
+            <i data-lucide="linkedin" style="width:16px;height:16px;color:#60a5fa;"></i> LinkedIn
+          </a>
+        </div>
+
+        <!-- Form -->
+        <form id="contactForm" class="reveal delay-200" style="width:100%;display:flex;flex-direction:column;gap:1rem;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <input type="text" class="form-input" placeholder="Your Name" required />
+            <input type="email" class="form-input" placeholder="Your Email" required />
+          </div>
+          <input type="text" class="form-input" placeholder="Subject" />
+          <textarea class="form-input" rows="5" placeholder="Your Message..." required style="resize:vertical;"></textarea>
+          <div style="text-align:center;margin-top:0.5rem;">
+            <button type="submit" class="btn-primary">
+              Send Message <i data-lucide="send" style="width:14px;height:14px;"></i>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer style="border-top:1px solid rgba(255,255,255,0.05);padding:2rem 1.5rem;">
+    <div style="max-width:72rem;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+      <span style="font-size:0.75rem;color:#71717a;">&copy; 2025 Your Name. All rights reserved.</span>
+      <span style="font-size:0.75rem;color:#71717a;">Built with <span style="color:#60a5fa;">♥</span> & code</span>
+    </div>
+  </footer>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <div style="display:flex;align-items:center;gap:0.5rem;">
+      <i data-lucide="check-circle" style="width:16px;height:16px;color:#60a5fa;"></i>
+      <span>Message sent successfully!</span>
+    </div>
+  </div>
+
+  <!-- ===== SCRIPTS ===== -->
+  <script>
+    // Init Lucide Icons
+    lucide.createIcons();
+
+    // ---- Mobile Menu ----
+    const menuToggle = document.getElementById('menuToggle');
+    const mobileMenu = document.getElementById('mobileMenu');
+    const mobileLinks = document.querySelectorAll('.mobile-link');
+
+    function checkMobile() {
+      if (window.innerWidth <= 768) {
+        menuToggle.style.display = 'block';
+        document.querySelector('.desktop-nav').style.display = 'none';
+      } else {
+        menuToggle.style.display = 'none';
+        document.querySelector('.desktop-nav').style.display = 'flex';
+        mobileMenu.classList.remove('open');
+      }
+    }
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    menuToggle.addEventListener('click', () => {
+      mobileMenu.classList.toggle('open');
+    });
+    mobileLinks.forEach(link => {
+      link.addEventListener('click', () => mobileMenu.classList.remove('open'));
+    });
+
+    // ---- Scroll Reveal ----
+    const revealElements = document.querySelectorAll('.reveal');
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('active');
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+    revealElements.forEach(el => revealObserver.observe(el));
+
+    // ---- Skill Bar Animation ----
+    const skillBars = document.querySelectorAll('.skill-bar-fill');
+    const skillObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('animate');
+        }
+      });
+    }, { threshold: 0.5 });
+    skillBars.forEach(bar => skillObserver.observe(bar));
+
+    // ---- Active Nav Link ----
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    function updateActiveNav() {
+      let current = '';
+      sections.forEach(section => {
+        const top = section.offsetTop - 120;
+        if (window.scrollY >= top) current = section.getAttribute('id');
+      });
+      navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) link.classList.add('active');
+      });
+    }
+    window.addEventListener('scroll', updateActiveNav);
+
+    // ---- Scroll Progress Bar ----
+    const scrollIndicator = document.getElementById('scrollIndicator');
+    window.addEventListener('scroll', () => {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const scrollPercent = (scrollTop / docHeight) * 100;
+      scrollIndicator.style.width = scrollPercent + '%';
+    });
+
+    // ---- Contact Form ----
+    const contactForm = document.getElementById('contactForm');
+    const toast = document.getElementById('toast');
+
+    contactForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      // Show toast
+      toast.classList.add('show');
+      contactForm.reset();
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    });
+
+    // ---- Navbar background on scroll ----
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 50) {
+        navbar.style.background = 'rgba(9,9,11,0.95)';
+        navbar.style.borderBottomColor = 'rgba(255,255,255,0.08)';
+      } else {
+        navbar.style.background = 'rgba(9,9,11,0.8)';
+        navbar.style.borderBottomColor = 'rgba(255,255,255,0.05)';
+      }
+    });
+  </script>
+</body>
+</html>  i want    light theme
